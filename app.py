@@ -2,7 +2,309 @@ import streamlit as st
 import pandas as pd
 import re
 
+st.set_page_config(
+    page_title="Customer Feedback Intelligence System",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+st.markdown(
+    """
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --surface: rgba(255, 255, 255, 0.86);
+            --surface-strong: #ffffff;
+            --border: rgba(15, 23, 42, 0.10);
+            --text: #102033;
+            --muted: #5c6b7d;
+            --accent: #0f766e;
+            --accent-strong: #115e59;
+            --accent-soft: #dff5f3;
+            --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+        }
+
+        .stApp {
+            background:
+                radial-gradient(circle at top left, rgba(15, 118, 110, 0.10), transparent 30%),
+                radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 28%),
+                linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+            color: var(--text);
+        }
+
+        .block-container {
+            padding-top: 2rem;
+            padding-bottom: 2.5rem;
+            max-width: 1320px;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text);
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .stCaption {
+            color: var(--muted);
+        }
+
+        .stMarkdown p, .stMarkdown li, .stMarkdown span {
+            color: var(--text);
+            line-height: 1.65;
+        }
+
+        div[data-testid="stMarkdownContainer"] strong {
+            color: var(--text);
+        }
+
+        div[data-testid="stMarkdownContainer"] a {
+            color: var(--accent-strong);
+            text-decoration: none;
+        }
+
+        div[data-testid="stMarkdownContainer"] a:hover {
+            text-decoration: underline;
+        }
+
+        .hero-card {
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.95), rgba(15, 23, 42, 0.96));
+            color: #fff;
+            border-radius: 22px;
+            padding: 1.25rem 1.4rem;
+            margin: 0.4rem 0 1.25rem 0;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .hero-card h2 {
+            margin: 0;
+            font-size: 1.15rem;
+            color: #fff;
+        }
+
+        .hero-card p {
+            margin: 0.45rem 0 0;
+            color: rgba(255, 255, 255, 0.86);
+            line-height: 1.6;
+        }
+
+        .stMetric {
+            background: var(--surface-strong);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1rem 1rem 0.8rem;
+            box-shadow: var(--shadow);
+        }
+
+        .stMetric label {
+            color: var(--muted) !important;
+            font-size: 0.88rem;
+        }
+
+        .stMetric [data-testid="stMetricValue"] {
+            color: var(--text);
+            font-weight: 800;
+        }
+
+        .stDataFrame, .stPlotlyChart {
+            background: var(--surface-strong);
+            border-radius: 18px;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        div[data-testid="stDataFrame"] {
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        div[data-testid="stDataFrame"] table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        div[data-testid="stDataFrame"] thead tr th {
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(17, 94, 89, 0.08));
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        div[data-testid="stDataFrame"] tbody tr:nth-child(odd) td {
+            background: rgba(248, 250, 252, 0.85);
+        }
+
+        div[data-testid="stDataFrame"] tbody tr:hover td {
+            background: rgba(223, 245, 243, 0.85);
+        }
+
+        .section-card {
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1rem 1rem 0.25rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+        }
+
+        .section-card .stSubheader {
+            margin-bottom: 0.25rem;
+        }
+
+        div[data-testid="stFileUploader"] {
+            background: var(--surface-strong);
+            border: 1px dashed rgba(15, 118, 110, 0.35);
+            border-radius: 18px;
+            padding: 0.75rem 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        div[data-testid="stFileUploader"] section {
+            background: rgba(15, 118, 110, 0.04);
+            border-radius: 12px;
+        }
+
+        div[data-testid="stFileUploader"] button,
+        div[data-testid="stFileUploader"] button span,
+        div[data-testid="stFileUploader"] button p {
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong)) !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            border: none !important;
+        }
+
+        div[data-testid="stFileUploader"] button:hover {
+            background: linear-gradient(135deg, #0e8a81, #0b4f4b) !important;
+            color: #ffffff !important;
+        }
+
+        .stAlert {
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .stButton > button {
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 0.55rem 1rem;
+            font-weight: 700;
+            box-shadow: 0 10px 20px rgba(15, 118, 110, 0.18);
+        }
+
+        .stButton > button:hover {
+            background: linear-gradient(135deg, #0e8a81, #0b4f4b);
+            color: #fff;
+        }
+
+        div[data-testid="stDownloadButton"] button,
+        div[data-testid="stDownloadButton"] button p,
+        div[data-testid="stDownloadButton"] a {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            text-decoration: none !important;
+        }
+
+        div[data-testid="stDownloadButton"] button:hover {
+            background: linear-gradient(135deg, #0e8a81, #0b4f4b) !important;
+            color: #ffffff !important;
+        }
+
+        hr {
+            border-color: rgba(15, 23, 42, 0.10);
+        }
+
+        div[data-testid="stMarkdownContainer"] h3 {
+            margin-top: 0.5rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .stInfo {
+            border-radius: 16px;
+            border: 1px solid rgba(15, 118, 110, 0.18);
+            background: linear-gradient(135deg, rgba(223, 245, 243, 0.95), rgba(255, 255, 255, 0.96));
+            color: var(--text);
+            box-shadow: var(--shadow);
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+def report_table(dataframe, *, hide_index=True):
+    styled = (
+        dataframe.style
+        .set_table_styles([
+            {"selector": "table", "props": [("border-collapse", "separate"), ("border-spacing", "0"), ("width", "100%"), ("background-color", "#ffffff"), ("border", "1px solid rgba(15, 23, 42, 0.10)"), ("border-radius", "16px"), ("overflow", "hidden")]},
+            {"selector": "th", "props": [("background-color", "#e8f3f1"), ("color", "#102033"), ("font-weight", "700"), ("text-align", "left"), ("padding", "0.8rem 0.9rem"), ("border-bottom", "1px solid rgba(15, 23, 42, 0.10)")]},
+            {"selector": "td", "props": [("color", "#102033"), ("padding", "0.78rem 0.9rem"), ("border-bottom", "1px solid rgba(15, 23, 42, 0.06)"), ("vertical-align", "top"), ("white-space", "normal")]},
+            {"selector": "tbody tr:nth-child(even)", "props": [("background-color", "#f8fafc")]},
+            {"selector": "tbody tr:hover", "props": [("background-color", "#dff5f3")]},
+        ])
+        .set_properties(**{"background-color": "#ffffff", "color": "#102033"})
+        .format(na_rep="-")
+    )
+
+    if hide_index:
+        styled = styled.hide(axis="index")
+
+    return styled
+
+
+def render_table_section(title, dataframe, *, file_name, key_prefix, hide_index=True, include_index_in_download=False):
+    st.subheader(title)
+
+    preview_limit = len(dataframe)
+    if len(dataframe) > 5:
+        preview_options = sorted({5, min(10, len(dataframe)), min(20, len(dataframe)), len(dataframe)})
+        preview_limit = st.selectbox(
+            f"Zoom preview for {title}",
+            preview_options,
+            index=0,
+            key=f"{key_prefix}_zoom"
+        )
+
+    st.table(
+        report_table(
+            dataframe.head(preview_limit),
+            hide_index=hide_index
+        )
+    )
+
+    if len(dataframe) > preview_limit:
+        st.caption(f"Showing {preview_limit} of {len(dataframe)} rows. Use the zoom selector to preview more.")
+
+    st.download_button(
+        f"Download {title}",
+        dataframe.to_csv(index=include_index_in_download),
+        file_name=file_name,
+        mime="text/csv",
+        type="primary",
+        key=f"{key_prefix}_download"
+    )
+
 st.title("Customer Feedback Intelligence System")
+st.markdown(
+    """
+    <div class="hero-card">
+        <h2>Upload customer feedback and turn it into a clear business summary.</h2>
+        <p>
+            The app cleans raw feedback, labels each comment by sentiment and complaint type,
+            and presents the results in simple charts, tables, and short summaries.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 uploaded_file = st.file_uploader(
     "Upload Customer Feedback CSV",
@@ -12,8 +314,13 @@ uploaded_file = st.file_uploader(
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
 
-    st.write("Dataset Preview")
-    st.dataframe(df.head())
+    render_table_section(
+        "Dataset Preview",
+        df.head(),
+        file_name="dataset_preview.csv",
+        key_prefix="dataset_preview",
+        hide_index=True
+    )
 
     st.metric("Total Feedback Records", len(df))
 
@@ -71,7 +378,7 @@ if uploaded_file:
     st.subheader("Data Quality Report")
     st.write(f"Missing Timestamps: {df['timestamp'].isna().sum() if 'timestamp' in df.columns else 'N/A'}")
     st.write(f"Missing Ratings: {df['rating'].isna().sum() if 'rating' in df.columns else 'N/A'}")
-    st.write(f"Duplicate Feedback Removed: {duplicates_removed}")
+    st.write(f"Duplicate Feedback Removed: {duplicates_removed}") 
 
     df["timestamp"] = pd.to_datetime(
         df["timestamp"],
@@ -184,8 +491,8 @@ if uploaded_file:
     df["category"] = df["feedback_text"].apply(get_category)
     df["summary"] = df["feedback_text"].apply(generate_summary)
 
-    st.subheader("Processed Data")
-    st.dataframe(
+    render_table_section(
+        "Processed Data",
         df[
             [
                 "feedback_text",
@@ -193,15 +500,25 @@ if uploaded_file:
                 "category",
                 "summary"
             ]
-        ]
+        ],
+        file_name="processed_feedback.csv",
+        key_prefix="processed_data",
+        hide_index=True
     )
 
-    st.subheader("Top Complaint Categories")
-
-    st.dataframe(
+    complaint_table = (
         df["category"]
         .value_counts()
         .reset_index()
+        .rename(columns={"index": "Complaint Category", "category": "Count"})
+    )
+
+    render_table_section(
+        "Top Complaint Categories",
+        complaint_table,
+        file_name="top_complaint_categories.csv",
+        key_prefix="complaint_categories",
+        hide_index=True
     )
 
     st.subheader("Representative Examples")
@@ -219,8 +536,6 @@ if uploaded_file:
         for ex in examples:
             st.write("•", ex)
 
-    st.subheader("Overall Sentiment Breakdown")
-
     sentiment_counts = df["sentiment"].value_counts()
 
     sentiment_df = pd.DataFrame({
@@ -230,7 +545,14 @@ if uploaded_file:
         ).round(2)
     })
 
-    st.dataframe(sentiment_df)
+    render_table_section(
+        "Overall Sentiment Breakdown",
+        sentiment_df,
+        file_name="sentiment_breakdown.csv",
+        key_prefix="sentiment_breakdown",
+        hide_index=False,
+        include_index_in_download=True
+    )
 
     st.subheader("Project Summary")
 
@@ -253,16 +575,25 @@ if uploaded_file:
         df["sentiment"]
     )
 
-    st.subheader("Category-wise Sentiment")
-    st.dataframe(pivot)
+    render_table_section(
+        "Category-wise Sentiment",
+        pivot,
+        file_name="category_wise_sentiment.csv",
+        key_prefix="category_sentiment",
+        hide_index=False,
+        include_index_in_download=True
+    )
 
     negative_df = df[df["sentiment"] == "Negative"]
 
-    st.subheader("Top Negative Complaints")
-    st.dataframe(
+    render_table_section(
+        "Top Negative Complaints",
         negative_df[
             ["feedback_text", "category"]
-        ].head(20)
+        ].head(20),
+        file_name="top_negative_complaints.csv",
+        key_prefix="negative_complaints",
+        hide_index=True
     )
 
     import plotly.express as px
@@ -277,6 +608,15 @@ if uploaded_file:
         title="Sentiment Distribution"
     )
 
+    fig.update_layout(
+        template="plotly_white",
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        font=dict(color="#102033"),
+        legend=dict(bgcolor="rgba(0,0,0,0)"),
+        margin=dict(l=20, r=20, t=50, b=20)
+    )
+
     st.plotly_chart(fig)
 
     category_counts = df["category"].value_counts().reset_index()
@@ -288,6 +628,17 @@ if uploaded_file:
         y="count",
         title="Complaint Categories"
     )
+
+    fig2.update_layout(
+        template="plotly_white",
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        font=dict(color="#102033"),
+        margin=dict(l=20, r=20, t=50, b=40)
+    )
+
+    fig2.update_xaxes(title_text="Category", gridcolor="rgba(15, 23, 42, 0.08)")
+    fig2.update_yaxes(title_text="Count", gridcolor="rgba(15, 23, 42, 0.08)")
 
     st.plotly_chart(fig2)
 
@@ -309,7 +660,8 @@ if uploaded_file:
         "Download Enriched CSV",
         csv,
         file_name="cleaned_enriched_feedback.csv",
-        mime="text/csv"
+        mime="text/csv",
+        type="primary"
     )
 
     st.markdown("---")
